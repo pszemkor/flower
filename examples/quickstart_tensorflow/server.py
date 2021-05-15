@@ -21,4 +21,4 @@ if __name__ == "__main__":
         min_fit_clients=2,  # Minimum number of clients to be sampled for the next round
         min_available_clients=2)  # Minimum number of clients that need to be connected to the server before a training round can start)
     
-    fl.server.start_server("0.0.0.0:8080", config={"num_rounds": 5}, strategy=strategy)
+    fl.server.start_server("0.0.0.0:8080", config={"num_rounds": 30}, strategy=strategy)

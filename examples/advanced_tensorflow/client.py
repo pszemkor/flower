@@ -70,7 +70,7 @@ def main() -> None:
     # Parse command line argument `partition`
     parser = argparse.ArgumentParser(description="Flower")
     parser.add_argument("--partition", type=int, choices=range(0, 10), required=True)
-    parser.add_argument("--server", type=string, required=True)
+    parser.add_argument("--server", type=str, required=True)
 
     args = parser.parse_args()
 

@@ -70,6 +70,8 @@ def main() -> None:
     # Parse command line argument `partition`
     parser = argparse.ArgumentParser(description="Flower")
     parser.add_argument("--partition", type=int, choices=range(0, 10), required=True)
+    parser.add_argument("--server", type=string, required=True)
+
     args = parser.parse_args()
 
     # Load and compile Keras model
@@ -83,7 +85,7 @@ def main() -> None:
 
     # Start Flower client
     client = CifarClient(model, x_train, y_train, x_test, y_test)
-    fl.client.start_numpy_client("[::]:8080", client=client)
+    fl.client.start_numpy_client(args.server + ":8080", client=client)
 
 
 def load_partition(idx: int):

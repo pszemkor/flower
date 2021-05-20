@@ -1,17 +1,27 @@
-from typing import Any, Callable, Dict, List, Optional, Tuple
+import zipfile
+from typing import Dict, Optional, Tuple
 
 import flwr as fl
 import tensorflow as tf
+import wget
+
+from .client import load_test_data
+
+
+def download_dataset():
+    wget.download('https://storage.googleapis.com/fl-covid-data/test.zip')
+    with zipfile.ZipFile('./test.zip', 'r') as zip_ref:
+        zip_ref.extractall('.')
 
 
 def main() -> None:
     # Load and compile model for
     # 1. server-side parameter initialization
     # 2. server-side parameter evaluation
-    model = tf.keras.applications.EfficientNetB0(
-        input_shape=(32, 32, 3), weights=None, classes=10
+    model = tf.keras.applications.ResNet50(
+        input_shape=(224, 224, 3), weights=None, classes=3
     )
-    model.compile("adam", "sparse_categorical_crossentropy", metrics=["accuracy"])
+    model.compile("adam", "categorical_crossentropy", metrics=["accuracy"])
 
     # Create strategy
     strategy = fl.server.strategy.FedAvg(
@@ -27,24 +37,21 @@ def main() -> None:
     )
 
     # Start Flower server for four rounds of federated learning
-    fl.server.start_server("[::]:8080", config={"num_rounds": 4}, strategy=strategy)
+    fl.server.start_server("[::]:8080", config={"num_rounds": 10}, strategy=strategy)
 
 
 def get_eval_fn(model):
     """Return an evaluation function for server-side evaluation."""
 
     # Load data and model here to avoid the overhead of doing it in `evaluate` itself
-    (x_train, y_train), _ = tf.keras.datasets.cifar10.load_data()
-
-    # Use the last 5k training examples as a validation set
-    x_val, y_val = x_train[45000:50000], y_train[45000:50000]
+    x_test, y_test = load_test_data
 
     # The `evaluate` function will be called after every round
     def evaluate(
         weights: fl.common.Weights,
     ) -> Optional[Tuple[float, Dict[str, fl.common.Scalar]]]:
         model.set_weights(weights)  # Update model with the latest parameters
-        loss, accuracy = model.evaluate(x_val, y_val)
+        loss, accuracy = model.evaluate(x_test, y_test)
         return loss, {"accuracy": accuracy}
 
     return evaluate

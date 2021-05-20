@@ -44,15 +44,15 @@ def get_all_vals(class_dict):
     return np.array(x), to_categorical(y)
 
 
-def get_iid(id, class_to_samples):
+def get_iid(id, class_to_samples, count):
     x, y = get_all_vals(class_to_samples)
-    return transform_to_train(id, x, y)
+    return transform_to_train(id, x, y, count)
 
 
-def get_random(id, class_to_samples):
+def get_random(id, class_to_samples, count):
     x, y = get_all_vals(class_to_samples)
     sklearn.utils.shuffle(x, y)
-    return transform_to_train(id, x, y)
+    return transform_to_train(id, x, y, count)
 
 
 def get_noniid(id, class_to_samples, count):
@@ -64,13 +64,14 @@ def get_noniid(id, class_to_samples, count):
     return x_train, y_train
 
 
-def transform_to_train(id, x, y):
+def transform_to_train(id, x, y, count):
     x_train, y_train = [], []
-    for i in range(len(x)):
-        if i % id == 0:
-            img = load_image(x[i])
-            x_train.append(img)
-            y_train.append(y[i])
+    i = id
+    while i < len(x):
+        img = load_image(x[i])
+        x_train.append(img)
+        y_train.append(y[i])
+        i += count
     return np.array(x_train), np.array(y_train)
 
 
@@ -173,7 +174,7 @@ class FederatedClient(fl.client.NumPyClient):
 def main() -> None:
     # Parse command line argument `partition`
     parser = argparse.ArgumentParser(description="Flower")
-    parser.add_argument("--partition", type=int, choices=range(0, 100), required=True)
+    parser.add_argument("--partition", type=int, required=True)
     parser.add_argument("--server", type=str, required=True)
     parser.add_argument("--strategy", type=str, required=True)
     parser.add_argument("--count", type=int, required=True)

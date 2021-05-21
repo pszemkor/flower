@@ -78,16 +78,16 @@ def transform_to_train(id, x, y, count):
 def load_train_data(id, strategy, count):
     class_to_train_samples = read_data_from_path('train')
     if strategy == 'iid':
-        return get_iid(id, class_to_train_samples)
+        return get_iid(id, class_to_train_samples, count)
     elif strategy == 'noniid':
         return get_noniid(id, class_to_train_samples, count)
     else:
-        return get_random(id, class_to_train_samples)
+        return get_random(id, class_to_train_samples, count)
 
 
-def load_valid_data(id):
+def load_valid_data(id, count):
     class_to_valid = read_data_from_path('valid')
-    return get_iid(id, class_to_valid)
+    return get_iid(id, class_to_valid, count)
 
 
 def load_test_data():
@@ -188,7 +188,7 @@ def main() -> None:
     model.compile("adam", "categorical_crossentropy", metrics=["accuracy"])
     download_dataset()
     x_train, y_train = load_train_data(args.partition, args.strategy, args.count)
-    x_test, y_test = load_valid_data(args.partition)
+    x_test, y_test = load_valid_data(args.partition, args.count)
 
     # Start Flower client
     client = FederatedClient(model, x_train, y_train, x_test, y_test)

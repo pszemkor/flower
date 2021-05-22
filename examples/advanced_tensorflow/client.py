@@ -195,7 +195,7 @@ def main() -> None:
         input_shape=(224, 224, 3), weights=None, classes=3
     )
     model.compile("adam", "sparse_categorical_crossentropy", metrics=["accuracy"])
-    # download_dataset()
+    download_dataset()
     x_train, y_train = load_train_data(args.partition, args.strategy, args.count)
     print(len(x_train), len(y_train))
     x_test, y_test = load_valid_data(args.partition, args.count)

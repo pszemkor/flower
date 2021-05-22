@@ -192,7 +192,7 @@ def main() -> None:
     args = parser.parse_args()
 
     # Load and compile Keras model
-    model = tf.keras.applications.MobileNetV3Small(
+    model = tf.keras.applications.ResNet50(
         input_shape=(224, 224, 3), weights=None, classes=3
     )
     model.compile("adam", "sparse_categorical_crossentropy", metrics=["accuracy"])

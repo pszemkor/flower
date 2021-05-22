@@ -14,6 +14,9 @@ LOCAL_EPOCHS = 2
 CLIENT_COUNT = 5
 ROUND_NO = 0
 
+loss_vals = []
+acc_vals = []
+
 
 def download_dataset():
     wget.download('https://storage.googleapis.com/fl-covid-data/test.zip')
@@ -57,9 +60,9 @@ def main() -> None:
     # Create strategy
     strategy = fl.server.strategy.FedAvg(
         fraction_fit=0.6,
-        fraction_eval=0.5,
+        fraction_eval=0.6,
         min_fit_clients=2,
-        min_eval_clients=1,
+        min_eval_clients=2,
         min_available_clients=CLIENT_COUNT,
         eval_fn=get_eval_fn(model),
         on_fit_config_fn=fit_config,
@@ -81,15 +84,14 @@ def get_eval_fn(model):
     def evaluate(
         weights: fl.common.Weights,
     ) -> Optional[Tuple[float, Dict[str, fl.common.Scalar]]]:
-        global ROUND_NO
-        w = model.get_weights().copy()
+        global ROUND_NO, loss_vals, acc_vals
         model.set_weights(weights)  # Update model with the latest parameters
         loss, accuracy = model.evaluate(x_test, y_test)
-        pred = model.predict(x_test)
-        w2 = model.get_weights()
 
         print('ROUND', ROUND_NO, 'acc', accuracy, 'loss', loss)
         ROUND_NO += 1
+        loss_vals.append(loss)
+        acc_vals.append(accuracy)
         return loss, {"accuracy": accuracy}
 
     return evaluate
@@ -114,3 +116,4 @@ def evaluate_config(rnd: int):
 
 if __name__ == "__main__":
     main()
+

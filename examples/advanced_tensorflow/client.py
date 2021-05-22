@@ -176,7 +176,6 @@ class FederatedClient(fl.client.NumPyClient):
 
         # Evaluate global model parameters on the local test data and return results
         loss, accuracy = self.model.evaluate(self.x_test, self.y_test, 32)
-        print(self.model.predict(self.x_test))
         num_examples_test = len(self.x_test)
         return loss, num_examples_test, {"accuracy": accuracy}
 
@@ -192,7 +191,7 @@ def main() -> None:
     args = parser.parse_args()
 
     # Load and compile Keras model
-    model = tf.keras.applications.ResNet50(
+    model = tf.keras.applications.EfficientNetB0(
         input_shape=(224, 224, 3), weights=None, classes=3
     )
     model.compile("adam", "sparse_categorical_crossentropy", metrics=["accuracy"])

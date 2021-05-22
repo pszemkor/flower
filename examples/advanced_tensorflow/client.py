@@ -116,7 +116,7 @@ def read_data_from_path(path):
 
     for item in os.listdir(path):
         if item in class_encoding.keys():
-            class_to_train_samples[item] = get_samples_from(os.path.join(path, item))[:100] #todo remove - just to speed up debugging on GCP
+            class_to_train_samples[item] = get_samples_from(os.path.join(path, item))
     return class_to_train_samples
 
 
@@ -192,7 +192,7 @@ def main() -> None:
 
     # Load and compile Keras model
     model = tf.keras.applications.EfficientNetB0(
-        input_shape=(224, 224, 3), weights=None, classes=3
+        input_shape=(224, 224, 3), weights='imagenet', classes=3
     )
     model.compile("adam", "sparse_categorical_crossentropy", metrics=["accuracy"])
     download_dataset()

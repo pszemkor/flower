@@ -32,7 +32,7 @@ def main() -> None:
 
     download_dataset()
 
-    model = tf.keras.applications.MobileNetV3Small(
+    model = tf.keras.applications.MobileNetV2(
         input_shape=(224, 224, 3), weights=None, classes=3
     )
 
@@ -49,6 +49,8 @@ def main() -> None:
     NUM_ROUNDS = args.rounds
     LOCAL_EPOCHS = args.local_epochs
     CLIENT_COUNT = args.count
+
+    print("Strategy:", args.strategy)
 
     model.compile("adam", "categorical_crossentropy", metrics=["accuracy"])
 

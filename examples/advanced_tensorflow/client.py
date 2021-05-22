@@ -77,6 +77,12 @@ def transform_to_train(id, x, y, count):
 
 def load_train_data(id, strategy, count):
     class_to_train_samples = read_data_from_path('train')
+    print(class_to_train_samples.keys())
+    for k, v in class_to_train_samples.items():
+        print(k, v[0], v[-1])
+        print("****")
+    print(len(class_to_train_samples))
+
     if strategy == 'iid':
         return get_iid(id, class_to_train_samples, count)
     elif strategy == 'noniid':
@@ -142,7 +148,7 @@ class FederatedClient(fl.client.NumPyClient):
             self.y_train,
             batch_size,
             epochs,
-            validation_split=0.1,
+            validation_split=0.2,
         )
 
         # Return updated model parameters and results
@@ -166,7 +172,7 @@ class FederatedClient(fl.client.NumPyClient):
         steps: int = config["val_steps"]
 
         # Evaluate global model parameters on the local test data and return results
-        loss, accuracy = self.model.evaluate(self.x_test, self.y_test, 32, steps=steps)
+        loss, accuracy = self.model.evaluate(self.x_test, self.y_test, 32)
         num_examples_test = len(self.x_test)
         return loss, num_examples_test, {"accuracy": accuracy}
 
@@ -182,13 +188,15 @@ def main() -> None:
     args = parser.parse_args()
 
     # Load and compile Keras model
-    model = tf.keras.applications.MobileNetV3Small(
+    model = tf.keras.applications.MobileNetV2(
         input_shape=(224, 224, 3), weights=None, classes=3
     )
     model.compile("adam", "categorical_crossentropy", metrics=["accuracy"])
     download_dataset()
     x_train, y_train = load_train_data(args.partition, args.strategy, args.count)
+    print(len(x_train), len(y_train))
     x_test, y_test = load_valid_data(args.partition, args.count)
+    print(len(x_test), len(y_test))
 
     # Start Flower client
     client = FederatedClient(model, x_train, y_train, x_test, y_test)

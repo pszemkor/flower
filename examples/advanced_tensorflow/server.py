@@ -32,7 +32,7 @@ def main() -> None:
 
     download_dataset()
 
-    model = tf.keras.applications.MobileNetV2(
+    model = tf.keras.applications.EfficientNetB0(
         input_shape=(224, 224, 3), weights=None, classes=3
     )
 

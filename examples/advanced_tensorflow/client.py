@@ -10,10 +10,11 @@ import sklearn
 import tensorflow as tf
 import wget
 from tensorflow.keras.utils import to_categorical
-from sklearn.preprocessing import LabelEncoder
 
 # Make TensorFlow logs less verbose
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
+class_encoding = {'COVID': 0, 'Normal': 1, 'Viral Pneumonia': 2}
 
 
 def download_dataset():
@@ -38,10 +39,8 @@ def get_all_vals(class_dict):
             x.append(sample)
             y.append(k)
 
-    y = np.array(y)
-    label_encoder = LabelEncoder()
-    y = label_encoder.fit_transform(y)
-    return np.array(x), to_categorical(y)
+    y = np.array(list(map(lambda label: class_encoding[label], y)))
+    return np.array(x), y
 
 
 def get_iid(id, class_to_samples, count):
@@ -108,11 +107,10 @@ def load_test_data():
 
 
 def read_data_from_path(path):
-    classes = ['COVID', 'Normal', 'Viral Pneumonia']
     class_to_train_samples = {}
 
     for item in os.listdir(path):
-        if item in classes:
+        if item in class_encoding.keys():
             class_to_train_samples[item] = get_samples_from(os.path.join(path, item))
     return class_to_train_samples
 
@@ -188,10 +186,10 @@ def main() -> None:
     args = parser.parse_args()
 
     # Load and compile Keras model
-    model = tf.keras.applications.EfficientNetB0(
+    model = tf.keras.applications.MobileNetV3Small(
         input_shape=(224, 224, 3), weights=None, classes=3
     )
-    model.compile("adam", "categorical_crossentropy", metrics=["accuracy"])
+    model.compile("adam", "sparse_categorical_crossentropy", metrics=["accuracy"])
     download_dataset()
     x_train, y_train = load_train_data(args.partition, args.strategy, args.count)
     print(len(x_train), len(y_train))

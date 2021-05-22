@@ -32,7 +32,7 @@ def main() -> None:
 
     download_dataset()
 
-    model = tf.keras.applications.EfficientNetB0(
+    model = tf.keras.applications.MobileNetV3Small(
         input_shape=(224, 224, 3), weights=None, classes=3
     )
 
@@ -52,7 +52,7 @@ def main() -> None:
 
     print("Strategy:", args.strategy)
 
-    model.compile("adam", "categorical_crossentropy", metrics=["accuracy"])
+    model.compile("adam", "sparse_categorical_crossentropy", metrics=["accuracy"])
 
     # Create strategy
     strategy = fl.server.strategy.FedAvg(

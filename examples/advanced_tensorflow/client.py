@@ -71,7 +71,9 @@ def transform_to_train(id, x, y, count):
         x_train.append(img)
         y_train.append(y[i])
         i += count
-    return np.array(x_train), np.array(y_train)
+    x_train, y_train = np.array(x_train), np.array(y_train)
+    x_train, y_train = sklearn.utils.shuffle(x_train, y_train, random_state=42)
+    return x_train, y_train
 
 
 def load_train_data(id, strategy, count):
@@ -103,7 +105,10 @@ def load_test_data():
         img = load_image(x[i])
         x_test.append(img)
         y_test.append(y[i])
-    return np.array(x_test), np.array(y_test)
+    x_test, y_test = np.array(x_test), np.array(y_test)
+    x_test, y_test = sklearn.utils.shuffle(x_test, y_test, random_state=42)
+
+    return x_test, y_test
 
 
 def read_data_from_path(path):
@@ -171,6 +176,7 @@ class FederatedClient(fl.client.NumPyClient):
 
         # Evaluate global model parameters on the local test data and return results
         loss, accuracy = self.model.evaluate(self.x_test, self.y_test, 32)
+        print(self.model.predict(self.x_test))
         num_examples_test = len(self.x_test)
         return loss, num_examples_test, {"accuracy": accuracy}
 
@@ -190,7 +196,7 @@ def main() -> None:
         input_shape=(224, 224, 3), weights=None, classes=3
     )
     model.compile("adam", "sparse_categorical_crossentropy", metrics=["accuracy"])
-    download_dataset()
+    # download_dataset()
     x_train, y_train = load_train_data(args.partition, args.strategy, args.count)
     print(len(x_train), len(y_train))
     x_test, y_test = load_valid_data(args.partition, args.count)

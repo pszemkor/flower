@@ -40,7 +40,7 @@ def main() -> None:
     parser.add_argument("--batch_size", type=int, required=True)
     parser.add_argument("--local_epochs", type=int, required=True)
     parser.add_argument("--rounds", type=int, required=True)
-    parser.add_argument("--strategy", type=str, required=True) # for logging purposes only
+    parser.add_argument("--strategy", type=str, required=True)  # for logging purposes only
     parser.add_argument("--count", type=int, required=True)
 
     args = parser.parse_args()
@@ -58,8 +58,8 @@ def main() -> None:
     strategy = fl.server.strategy.FedAvg(
         fraction_fit=0.6,
         fraction_eval=0.2,
-        min_fit_clients=3,
-        min_eval_clients=2,
+        min_fit_clients=1,
+        min_eval_clients=1,
         min_available_clients=CLIENT_COUNT,
         eval_fn=get_eval_fn(model),
         on_fit_config_fn=fit_config,
@@ -82,8 +82,12 @@ def get_eval_fn(model):
         weights: fl.common.Weights,
     ) -> Optional[Tuple[float, Dict[str, fl.common.Scalar]]]:
         global ROUND_NO
+        w = model.get_weights().copy()
         model.set_weights(weights)  # Update model with the latest parameters
         loss, accuracy = model.evaluate(x_test, y_test)
+        pred = model.predict(x_test)
+        w2 = model.get_weights()
+
         print('ROUND', ROUND_NO, 'acc', accuracy, 'loss', loss)
         ROUND_NO += 1
         return loss, {"accuracy": accuracy}

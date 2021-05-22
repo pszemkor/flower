@@ -116,7 +116,7 @@ def read_data_from_path(path):
 
     for item in os.listdir(path):
         if item in class_encoding.keys():
-            class_to_train_samples[item] = get_samples_from(os.path.join(path, item))
+            class_to_train_samples[item] = get_samples_from(os.path.join(path, item))[:100] #todo remove - just to speed up debugging on GCP
     return class_to_train_samples
 
 

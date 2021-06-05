@@ -8,6 +8,7 @@ import tensorflow as tf
 import wget
 import pandas as pd
 from client import load_test_data
+import time
 
 BATCH_SIZE = 32
 NUM_ROUNDS = 10
@@ -18,7 +19,7 @@ STRATEGY = 'iid'
 
 loss_vals = []
 acc_vals = []
-
+times = []
 
 def upload_to_bucket(blob_name, path_to_file, bucket_name):
     storage_client = storage.Client.from_service_account_json('creds.json')
@@ -31,8 +32,9 @@ def upload_to_bucket(blob_name, path_to_file, bucket_name):
 
 
 def generate_csv():
-    global ROUND_NO, BATCH_SIZE, LOCAL_EPOCHS, CLIENT_COUNT, loss_vals, acc_vals
-    d = {'acc': acc_vals, 'loss': loss_vals}
+    global ROUND_NO, BATCH_SIZE, LOCAL_EPOCHS, CLIENT_COUNT, loss_vals, acc_vals, times
+    
+    d = {'acc': acc_vals, 'loss': loss_vals, 'time': times}
     df = pd.DataFrame(d)
     filename = 'R_{}_LE_{}_CC_{}_BS_{}_STRATEGY_{}.csv'.format(str(ROUND_NO), str(LOCAL_EPOCHS),
                                                                str(CLIENT_COUNT), str(BATCH_SIZE), STRATEGY)
@@ -58,7 +60,7 @@ def main() -> None:
 
     download_dataset()
 
-    model = tf.keras.applications.EfficientNetB0(
+    model = tf.keras.applications.ResNet50(
         input_shape=(224, 224, 3), weights=None, classes=3
     )
 
@@ -84,7 +86,7 @@ def main() -> None:
     strategy = fl.server.strategy.FedAvg(
         fraction_fit=0.5,
         fraction_eval=0.5,
-        min_fit_clients=CLIENT_COUNT,
+        min_fit_clients=2,
         min_eval_clients=1,
         min_available_clients=CLIENT_COUNT,
         eval_fn=get_eval_fn(model),
@@ -102,21 +104,23 @@ def get_eval_fn(model):
 
     # Load data and model here to avoid the overhead of doing it in `evaluate` itself
     x_test, y_test = load_test_data()
+    x_test = tf.keras.applications.resnet.preprocess_input(x_test)
+
 
     # The `evaluate` function will be called after every round
     def evaluate(
         weights: fl.common.Weights,
     ) -> Optional[Tuple[float, Dict[str, fl.common.Scalar]]]:
-        global ROUND_NO, loss_vals, acc_vals
+        global ROUND_NO, loss_vals, acc_vals, times
         model.set_weights(weights)  # Update model with the latest parameters
         loss, accuracy = model.evaluate(x_test, y_test)
         acc_vals.append(accuracy)
         loss_vals.append(loss)
+        times.append(time.time())
         print('ROUND', ROUND_NO, 'acc', accuracy, 'loss', loss)
         ROUND_NO += 1
-        loss_vals.append(loss)
-        acc_vals.append(accuracy)
-
+        if ROUND_NO > 9:
+            generate_csv()
         return loss, {"accuracy": accuracy}
 
     return evaluate
